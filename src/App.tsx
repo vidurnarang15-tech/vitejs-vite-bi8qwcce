@@ -46,7 +46,9 @@ const monYY = (isoOrYm: any) => {
   if (!y || !m || !names[m - 1]) return s;
   return `${names[m - 1]}-${y.slice(2)}`;
 };
-const rget = (row: any, ...names: string[]) => {
+// Small getter for raw row keys with fuzzy column names
+const rget = (row: any, ...names: any[]) => {
+  if (!row) return undefined;
   for (const n of names) {
     if (row[n] !== undefined) return row[n];
     const t = (typeof n === 'string' ? n : '')
@@ -61,7 +63,7 @@ const rget = (row: any, ...names: string[]) => {
   return undefined;
 };
 
-/* ============= SAMPLE (boot) ============== */
+/* ======== SAMPLE (replaced by uploaded data) ========= */
 let SAMPLE = {
   customers: [
     {
@@ -70,6 +72,7 @@ let SAMPLE = {
       region: 'West',
       state: 'Maharashtra',
       city: 'Mumbai',
+      masterSegment: 'Transactional', // Added sample data
       products: [
         { category: 'HRC', sku: 'E250A' },
         { category: 'Coated', sku: 'AZ70' },
@@ -81,6 +84,7 @@ let SAMPLE = {
       region: 'West',
       state: 'Maharashtra',
       city: 'Pune',
+      masterSegment: 'Strategic', // Added sample data
       products: [{ category: 'TMT', sku: 'Fe550D' }],
     },
     {
@@ -89,6 +93,7 @@ let SAMPLE = {
       region: 'West',
       state: 'Gujarat',
       city: 'Ahmedabad',
+      masterSegment: 'Transactional / Long Tail', // Added sample data
       products: [
         { category: 'HRC', sku: 'E250A' },
         { category: 'TMT', sku: 'Fe550D' },
@@ -109,49 +114,48 @@ let SAMPLE = {
   txns: [],
 };
 
-/* =============== UI PRIMITIVES ============== */
+/* =============== UI PRIMITIVES ================= */
+// [NO CHANGE] This is the original SectionCard component from your file
 function SectionCard({
   title,
+  subtitle,
   children,
   right,
   className = '',
   bodyClassName = '',
 }) {
   return (
-    <div className={`card ${className}`}>
-      <div className="card-header">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 border text-slate-600">
-            {/* simple list icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
+    <div
+      className={`bg-white rounded-2xl shadow-sm border border-slate-200 max-w-full overflow-hidden ${className}`}
+    >
+      <div className="px-4 sm:px-6 py-3 border-b border-slate-200">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <h3
+              className="text-base md:text-lg font-semibold truncate"
+              style={{ color: JSW_COLORS.ink }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </span>
-          <h3
-            className="text-base md:text-lg font-semibold truncate"
-            style={{ color: JSW_COLORS.primary }}
-          >
-            {title}
-          </h3>
+              {title}
+            </h3>
+          </div>
+          <div className="text-xs text-slate-500 flex-shrink-0 break-words">
+            {right}
+          </div>
         </div>
-        <div className="text-xs text-slate-500 break-words">{right}</div>
+        {subtitle && (
+          <p className="text-sm text-slate-700 mt-2">{subtitle}</p>
+        )}
       </div>
-      <div className={`p-5 sm:p-6 ${bodyClassName}`}>{children}</div>
+      <div
+        className={`p-4 sm:p-6 text-sm leading-relaxed break-words ${bodyClassName}`}
+      >
+        {children}
+      </div>
     </div>
   );
 }
 
+// [NO CHANGE] This is the original Modal component from your file
 function Modal({ title, open, onClose, children, footer }) {
   if (!open) return null;
   return (
@@ -165,7 +169,10 @@ function Modal({ title, open, onClose, children, footer }) {
           >
             {title}
           </h3>
-          <button onClick={onClose} className="btn-ghost">
+          <button
+            onClick={onClose}
+            className="text-slate-600 hover:text-slate-900 text-sm px-3 py-1 rounded-lg border"
+          >
             Close
           </button>
         </div>
@@ -183,26 +190,49 @@ function Modal({ title, open, onClose, children, footer }) {
   );
 }
 
-/* =========== Sidebar (UPDATED) =========== */
+// [NO CHANGE] This is the original Sidebar component from your file
 function Sidebar({ open, setOpen }) {
-  const logoUrl = '/logo.png';
-
+  const logoUrl =
+    'https://e7.pngegg.com/pngimages/723/866/png-clipart-jsw-group-india-jsw-steel-ltd-chief-executive-conglomerate-india-blue-company.png';
   const NavIcon = ({ children }) => (
     <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
       {children}
     </div>
   );
-
-  // ✔ PNG rupee icon with white filter
-  const RupeeIcon = (
-    <img
-      src="/rupee-icon.png"
-      alt="Rupee"
-      className="h-6 w-6 object-contain invert brightness-0"
-      draggable={false}
-    />
+  const NavItem = ({ icon, text, active = false }) => (
+    <div
+      className={`flex items-center gap-4 p-3 rounded-lg cursor-pointer ${
+        active ? 'text-white' : 'text-slate-300 hover:bg-white/10'
+      }`}
+      style={active ? { background: 'var(--brand-accent)' } : {}}
+    >
+      <NavIcon>{icon}</NavIcon>
+      <span
+        className={`font-medium transition-opacity duration-200 ${
+          open ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {text}
+      </span>
+    </div>
   );
-
+  // Icons
+  const PricingIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v0m0 10c-1.657 0-3-.895-3-2s1.343-2 3-2 3-.895 3-2-1.343-2-3-2m0 10V11m0 10h.01M12 11h.01M12 11V7m0 10V7m0 0h.01M12 7h.01"
+      />
+    </svg>
+  );
   const MenuIcon = (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -219,17 +249,6 @@ function Sidebar({ open, setOpen }) {
       />
     </svg>
   );
-
-  const NavItem = ({ icon, text, active = false }) => (
-    <div
-      className={`flex items-center gap-4 p-3 rounded-lg cursor-pointer text-slate-200 hover:bg-white/10`}
-      style={active ? { background: 'rgba(26,44,107,0.25)' } : {}}
-    >
-      <NavIcon>{icon}</NavIcon>
-      {open && <span className="font-medium">{text}</span>}
-    </div>
-  );
-
   return (
     <div
       className={`fixed top-0 left-0 h-full text-white p-4 transition-all duration-300 z-30 ${
@@ -238,29 +257,43 @@ function Sidebar({ open, setOpen }) {
       style={{ background: 'var(--brand)' }}
     >
       <div className="flex flex-col h-full">
-        {/* Logo only (no text), now filtered white */}
-        <div className="flex items-center h-12 mb-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 h-12 mb-6">
           <img
             src={logoUrl}
-            alt="Logo"
-            className={`h-10 invert brightness-0 ${open ? 'mx-0' : 'mx-auto'}`}
-            draggable={false}
+            alt="JSW Logo"
+            className={`h-10 transition-all duration-300 ${
+              open ? 'w-auto' : 'w-10'
+            }`}
           />
+          <span
+            className={`font-semibold text-lg transition-opacity duration-200 ${
+              open ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            JSW
+          </span>
         </div>
 
-        {/* Nav */}
+        {/* Nav Items */}
         <nav className="flex-1 space-y-2">
-          <NavItem icon={RupeeIcon} text="Customer Pricing" active />
+          <NavItem icon={PricingIcon} text="Customer Pricing" active />
         </nav>
 
-        {/* Toggle */}
+        {/* Footer Toggle */}
         <div className="mt-auto">
           <div
             className="flex items-center gap-4 p-3 rounded-lg cursor-pointer text-slate-300 hover:bg-white/10"
             onClick={() => setOpen(!open)}
           >
             <NavIcon>{MenuIcon}</NavIcon>
-            {open && <span className="font-medium">Collapse</span>}
+            <span
+              className={`font-medium transition-opacity duration-200 ${
+                open ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              Collapse
+            </span>
           </div>
         </div>
       </div>
@@ -275,32 +308,39 @@ export default function App() {
   const [segments, setSegments] = useState(SAMPLE.segments);
   const [marketIndex, setMarketIndex] = useState(SAMPLE.marketIndex);
   const [txns, setTxns] = useState(SAMPLE.txns);
-  const [customerMonthly, setCustomerMonthly] = useState<any[]>([]);
-  const [rawRows, setRawRows] = useState<any[]>([]);
-  const [segDescMap, setSegDescMap] = useState<Record<string, string>>({});
+  const [customerMonthly, setCustomerMonthly] = useState([]);
+  const [rawRows, setRawRows] = useState([]);
+  const [segDescMap, setSegDescMap] = useState({});
+  // key: SKU|Segment__node -> description
 
   // Deep-dive modal state
   const [rangeOpen, setRangeOpen] = useState(false);
-  const [rangeRows, setRangeRows] = useState<any[]>([]);
+  const [rangeRows, setRangeRows] = useState([]);
   const [rangeFYOnly, setRangeFYOnly] = useState(true);
   const [rangeExcludeOutliers, setRangeExcludeOutliers] = useState(true);
 
-  // Sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
   // UI state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [customerId, setCustomerId] = useState(customers[0]?.id || '');
+
+  // Keep customer in sync if data loads
+  useEffect(() => {
+    if (!customerId && customers.length > 0) {
+      setCustomerId(customers[0].id);
+    }
+  }, [customers, customerId]);
+
   const selectedCustomer = useMemo(
     () => customers.find((c) => c.id === customerId) || customers[0],
-    [customers, customerId]
+    [customers, customerId],
   );
 
   const categoriesForCustomer = useMemo(
     () =>
       Array.from(
-        new Set((selectedCustomer?.products || []).map((p) => p.category))
+        new Set((selectedCustomer?.products || []).map((p) => p.category)),
       ),
-    [selectedCustomer]
+    [selectedCustomer],
   );
   const [category, setCategory] = useState(categoriesForCustomer[0] || 'HRC');
 
@@ -309,7 +349,7 @@ export default function App() {
       (selectedCustomer?.products || [])
         .filter((p) => p.category === category)
         .map((p) => p.sku),
-    [selectedCustomer, category]
+    [selectedCustomer, category],
   );
   const [sku, setSku] = useState(skusForCategory[0] || '');
 
@@ -319,7 +359,7 @@ export default function App() {
         (t) =>
           t.customerId === customerId &&
           t.category === category &&
-          t.sku === sku
+          t.sku === sku,
       )
       .map((t) => t.width)
       .filter((v) => v != null);
@@ -331,7 +371,7 @@ export default function App() {
         (t) =>
           t.customerId === customerId &&
           t.category === category &&
-          t.sku === sku
+          t.sku === sku,
       )
       .map((t) => t.thickness)
       .filter((v) => v != null);
@@ -340,14 +380,14 @@ export default function App() {
   const [width, setWidth] = useState('');
   const [thickness, setThickness] = useState('');
   const [qty, setQty] = useState(100);
-
+  // Region/State/City filtered to the selection
   const regions = useMemo(() => {
     const pool = (txns || [])
       .filter(
         (t) =>
           t.customerId === customerId &&
           t.category === category &&
-          t.sku === sku
+          t.sku === sku,
       )
       .map((t) => t.region)
       .filter(Boolean);
@@ -355,7 +395,7 @@ export default function App() {
     return Array.from(new Set(pool.length ? pool : fallback));
   }, [txns, customers, customerId, category, sku]);
   const [region, setRegion] = useState(
-    selectedCustomer?.region || regions[0] || ''
+    selectedCustomer?.region || regions[0] || '',
   );
   const statesForRegion = useMemo(() => {
     const pool = (txns || [])
@@ -364,7 +404,7 @@ export default function App() {
           t.customerId === customerId &&
           t.category === category &&
           t.sku === sku &&
-          (!region || t.region === region)
+          (!region || t.region === region),
       )
       .map((t) => t.state)
       .filter(Boolean);
@@ -375,7 +415,7 @@ export default function App() {
     return Array.from(new Set(pool.length ? pool : fallback));
   }, [txns, customers, customerId, category, sku, region]);
   const [stateName, setStateName] = useState(
-    selectedCustomer?.state || statesForRegion[0] || ''
+    selectedCustomer?.state || statesForRegion[0] || '',
   );
   const citiesForState = useMemo(() => {
     const pool = (txns || [])
@@ -385,7 +425,7 @@ export default function App() {
           t.category === category &&
           t.sku === sku &&
           (!region || t.region === region) &&
-          (!stateName || t.state === stateName)
+          (!stateName || t.state === stateName),
       )
       .map((t) => t.city)
       .filter(Boolean);
@@ -396,59 +436,57 @@ export default function App() {
     return Array.from(new Set(pool.length ? pool : fallback));
   }, [txns, customers, customerId, category, sku, region, stateName]);
   const [city, setCity] = useState(
-    selectedCustomer?.city || citiesForState[0] || ''
+    selectedCustomer?.city || citiesForState[0] || '',
   );
 
-  useEffect(() => {
-    setCustomerId(customers[0]?.id || '');
-  }, [customers]);
+  // Keep dependent state in sync
   useEffect(() => {
     setCategory(categoriesForCustomer[0] || 'HRC');
-  }, [categoriesForCustomer]);
+  }, [JSON.stringify(categoriesForCustomer)]); // Use JSON.stringify for array dependency
   useEffect(() => {
     setSku(skusForCategory[0] || '');
-  }, [skusForCategory]);
+  }, [JSON.stringify(skusForCategory)]); // Use JSON.stringify for array dependency
   useEffect(() => {
     setWidth(widths.length ? String(widths[0]) : '');
     setThickness(thicknesses.length ? String(thicknesses[0]) : '');
-  }, [sku, widths, thicknesses]);
+  }, [sku, JSON.stringify(widths), JSON.stringify(thicknesses)]);
   useEffect(() => {
     setRegion(selectedCustomer?.region || regions[0] || '');
-  }, [selectedCustomer, regions]);
+  }, [selectedCustomer, JSON.stringify(regions)]);
   useEffect(() => {
     setStateName(selectedCustomer?.state || statesForRegion[0] || '');
-  }, [selectedCustomer, statesForRegion]);
+  }, [selectedCustomer, JSON.stringify(statesForRegion)]);
   useEffect(() => {
     setCity(selectedCustomer?.city || citiesForState[0] || '');
-  }, [selectedCustomer, citiesForState]);
+  }, [selectedCustomer, JSON.stringify(citiesForState)]);
 
-  const [segmentNode, setSegmentNode] = useState<string>('');
+  // ===== Derived outputs =====
   const eligibleNodes = useMemo(() => {
     const rows = (rawRows || []).filter(
       (r) =>
-        String(r['SKU']) === sku &&
-        String(r['Customer Name'] || r['Ship to Party Name'] || r['cust']) ===
-          selectedCustomer?.name
+        String(rget(r, 'SKU')) === sku &&
+        String(rget(r, 'Customer Name', 'Ship to Party Name', 'cust')) ===
+          selectedCustomer?.name,
     );
-    const nodes = Array.from(
-      new Set(rows.map((r) => r['Segment__node']).filter((v) => v != null))
-    );
-    return nodes.sort((a: any, b: any) => Number(a) - Number(b));
+    return Array.from(
+      new Set(rows.map((r) => rget(r, 'Segment__node')).filter((v) => v != null)),
+    ).sort((a, b) => Number(a) - Number(b));
   }, [rawRows, sku, selectedCustomer]);
+  const [segmentNode, setSegmentNode] = useState(eligibleNodes[0] ?? '');
+
   useEffect(() => {
     setSegmentNode(eligibleNodes[0] ?? '');
-  }, [eligibleNodes]);
+  }, [JSON.stringify(eligibleNodes)]);
 
   const segKey = useMemo(
     () => (segmentNode ? `${sku}|${segmentNode}` : null),
-    [sku, segmentNode]
+    [sku, segmentNode],
   );
   const seg = useMemo(
     () => (segKey ? (segments || []).find((s) => s.key === segKey) : null),
-    [segments, segKey]
+    [segments, segKey],
   );
   const segDesc = segKey ? segDescMap[segKey] || '—' : '—';
-
   const recentTxns = useMemo(
     () =>
       (txns || [])
@@ -456,11 +494,11 @@ export default function App() {
           (t) =>
             t.customerId === customerId &&
             t.category === category &&
-            t.sku === sku
+            t.sku === sku,
         )
         .sort((a, b) => (a.date < b.date ? 1 : -1))
         .slice(0, 10),
-    [txns, customerId, category, sku]
+    [txns, customerId, category, sku],
   );
   const lastTxnForNode = useMemo(
     () =>
@@ -470,12 +508,11 @@ export default function App() {
             t.customerId === customerId &&
             t.category === category &&
             t.sku === sku &&
-            String(t.segmentNode) === String(segmentNode)
+            String(t.segmentNode) === String(segmentNode),
         )
         .sort((a, b) => (a.date < b.date ? 1 : -1))[0],
-    [txns, customerId, category, sku, segmentNode]
+    [txns, customerId, category, sku, segmentNode],
   );
-
   const indexSeries =
     marketIndex[`${region}|${category}`] ||
     marketIndex[`All|${category}`] ||
@@ -489,21 +526,20 @@ export default function App() {
           (r.customerId === customerId ||
             r.customerName === selectedCustomer?.name) &&
           r.category === category &&
-          r.sku === sku
+          r.sku === sku,
       )
       .forEach((r) => m.set(String(r.month), Number(r.realizedPrice)));
     return m;
   }, [customerMonthly, customerId, selectedCustomer, category, sku]);
-
   const selectionTxns = useMemo(
     () =>
       (txns || []).filter(
         (t) =>
           t.customerId === customerId &&
           t.category === category &&
-          t.sku === sku
+          t.sku === sku,
       ),
-    [txns, customerId, category, sku]
+    [txns, customerId, category, sku],
   );
   const txnPriceByDate = useMemo(() => {
     const m = new Map();
@@ -521,7 +557,6 @@ export default function App() {
     m.forEach((agg, d) => out.set(d, Math.round(agg.v / agg.w)));
     return out;
   }, [selectionTxns]);
-
   const combinedSeries = useMemo(() => {
     const hasMonthly = monthlyMap.size > 0;
     if (hasMonthly) {
@@ -540,11 +575,11 @@ export default function App() {
       cust: txnPriceByDate.get(String(p.date).slice(0, 7)) ?? null,
     }));
   }, [indexSeries, monthlyMap, txnPriceByDate]);
-
-  const mode = (arr: any[]) => {
+  // ====== Behaviour summary ======
+  const mode = (arr) => {
     const m = new Map();
     arr.forEach((v) => m.set(v, (m.get(v) || 0) + 1));
-    let best: any = null,
+    let best = null,
       cnt = -1;
     m.forEach((c, v) => {
       if (c > cnt) {
@@ -554,22 +589,20 @@ export default function App() {
     });
     return best;
   };
-  const lakhs = (n: any) =>
+  const lakhs = (n) =>
     n == null || isNaN(Number(n))
       ? '—'
       : `₹${Math.round(Number(n) / 100000).toLocaleString()} L`;
-
   function computeBehaviorChips() {
     const rows = (rawRows || []).filter(
       (r) =>
         String(rget(r, 'Customer Name', 'Ship to Party Name', 'cust')) ===
-          selectedCustomer?.name && String(rget(r, 'SKU')) === sku
+          selectedCustomer?.name && String(rget(r, 'SKU')) === sku,
     );
-    const pick = (c: string) =>
+    const pick = (c) =>
       rows.map((r) => rget(r, c)).filter((x) => x !== undefined && x !== null);
-
     const monthsRaw = Array.from(
-      new Set(pick('Month').map((v) => String(v).slice(0, 7)))
+      new Set(pick('Month').map((v) => String(v).slice(0, 7))),
     );
     const monthsFmt = monthsRaw
       .filter((ym) => /^\d{4}-\d{2}$/.test(ym))
@@ -596,7 +629,6 @@ export default function App() {
           ? Math.round(relShareRaw)
           : Math.round(relShareRaw * 100)
         : null;
-
     return [
       ['Plant', preferredPlant],
       ['Months active', monthsFmt.length ? monthsFmt.join(', ') : '—'],
@@ -609,19 +641,18 @@ export default function App() {
       ['Rel. share of this SKU', relPct != null ? `${relPct}%` : '—'],
     ];
   }
-
   function computeOneLiner() {
     const mRows = (customerMonthly || []).filter(
       (r) =>
         (r.customerId === selectedCustomer?.id ||
           r.customerName === selectedCustomer?.name) &&
         r.category === category &&
-        r.sku === sku
+        r.sku === sku,
     );
     const rRows = (rawRows || []).filter(
       (r) =>
         String(rget(r, 'Customer Name', 'Ship to Party Name', 'cust')) ===
-          selectedCustomer?.name && String(rget(r, 'SKU')) === sku
+          selectedCustomer?.name && String(rget(r, 'SKU')) === sku,
     );
     if (!mRows.length && !rRows.length)
       return `${
@@ -636,13 +667,12 @@ export default function App() {
       monthToQty.set(m, (monthToQty.get(m) || 0) + q);
     });
     const activeMonths = Array.from(monthToQty.keys()).map((ym) =>
-      monYY(String(ym).slice(0, 7) + '-01')
+      monYY(String(ym).slice(0, 7) + '-01'),
     );
     const topMonths = Array.from(monthToQty.entries())
-      .sort((a: any, b: any) => b[1] - a[1])
+      .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([m]) => monYY(String(m).slice(0, 7) + '-01'));
-
     const cities = rRows.map((r) => rget(r, 'Ship To City')).filter(Boolean);
     const preferredCity = cities.length ? mode(cities) : mRows[0]?.city || '—';
     const plants = rRows.map((r) => rget(r, 'Plant')).filter(Boolean);
@@ -652,10 +682,10 @@ export default function App() {
     const qtyBins = rRows.map((r) => rget(r, 'Quantity_Bin')).filter(Boolean);
     const qbin = qtyBins.length ? mode(qtyBins) : undefined;
     const qtyPhrase = (() => {
-      const m = { H: 'High', M: 'Medium', L: 'Low' } as any;
+      const m = { H: 'High', M: 'Medium', L: 'Low' };
       if (!qbin) return 'Medium';
       const up = String(qbin).trim().toUpperCase();
-      return (m[up] || qbin) as string;
+      return m[up] || qbin;
     })();
 
     return [
@@ -674,23 +704,31 @@ export default function App() {
       .filter(Boolean)
       .join(' ');
   }
-
   const behaviorChips = useMemo(
     () => computeBehaviorChips(),
-    [rawRows, selectedCustomer, sku]
+    [rawRows, selectedCustomer, sku],
   );
   const oneLiner = useMemo(
     () => computeOneLiner(),
-    [rawRows, customerMonthly, selectedCustomer, sku, category]
+    [rawRows, customerMonthly, selectedCustomer, sku, category],
+  );
+  const badge = (label, value) => (
+    <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1 border border-slate-200">
+      <span className="text-xs font-medium text-slate-500">{label}</span>
+      <span className="font-semibold text-slate-800">{value}</span>
+    </div>
   );
 
-  /* ============ Upload handlers (unchanged) ============ */
-  async function handleDescUpload(e) {
+  // [CHANGE #1] This is the derived value for the new card
+  const masterSegment = selectedCustomer?.masterSegment || '—';
+
+  /* ============ Upload handlers ============ */
+  async function handleDescUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     const name = f.name.toLowerCase();
     const assignMap = (arr: any[]) => {
-      const map: Record<string, string> = {};
+      const map = {};
       arr.forEach((r) => {
         const SKU = rget(r, 'SKU', 'sku', 'Sku', 'SO-JSW Grade');
         const node = rget(
@@ -698,14 +736,14 @@ export default function App() {
           'Segment__node',
           'segment__node',
           'Segment Node',
-          'Segment_Node'
+          'Segment_Node',
         );
         const desc = rget(
           r,
           'Segment_Description',
           'SegmentDescription',
           'Description',
-          'Segment Description'
+          'Segment Description',
         );
         if (SKU && node !== undefined && node !== null && desc) {
           map[`${String(SKU)}|${String(node)}`] = String(desc);
@@ -718,51 +756,52 @@ export default function App() {
       Papa.parse(f, {
         header: true,
         skipEmptyLines: true,
-        complete: ({ data }) => assignMap(data || []),
+        complete: ({ data }) => assignMap((data as any[]) || []),
       });
       return;
     }
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const XLSX = await import('xlsx');
-      const wb = XLSX.read(new Uint8Array(evt.target!.result as ArrayBuffer), {
+      const wb = XLSX.read(new Uint8Array(evt.target.result as ArrayBuffer), {
         type: 'array',
       });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws);
-      assignMap(rows as any[]);
+      assignMap(rows);
     };
     reader.readAsArrayBuffer(f);
   }
 
-  async function handleDataUpload(e) {
+  async function handleDataUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     const name = f.name.toLowerCase();
-
     if (name.endsWith('.csv')) {
       const Papa = (await import('papaparse')).default;
       Papa.parse(f, {
         header: true,
         skipEmptyLines: true,
         complete: ({ data }) => {
-          const rows: any[] = data || [];
+          const rows = (data as any[]) || [];
           const hasMonthly =
             rows[0] && rget(rows[0], 'month', 'Month', 'YYYY-MM');
           if (hasMonthly) {
+            // This is the Customer Monthly path
             const cm = rows.map((r) => ({
               customerId: rget(r, 'customerId', 'CustomerId', 'Customer ID'),
               customerName: rget(
                 r,
                 'customerName',
                 'CustomerName',
-                'Customer Name'
+                'Customer Name',
               ),
               category: rget(r, 'category', 'Category') || 'HRC',
               sku: rget(r, 'sku', 'SKU'),
               month: String(rget(r, 'month', 'Month', 'YYYY-MM')),
               realizedPrice: Number(
-                rget(r, 'realizedPrice', 'RealizedPrice', 'realized_price') || 0
+                rget(r, 'realizedPrice', 'RealizedPrice', 'realized_price') ||
+                  0,
               ),
               qty: Number(rget(r, 'qty', 'quantity', 'Quantity') || 0),
               region: rget(r, 'region', 'Region'),
@@ -772,25 +811,59 @@ export default function App() {
                 r,
                 'endUseIndustry',
                 'industry',
-                'end use industry'
+                'end use industry',
               ),
+              // [CHANGE #2] Read Master Segment here
+              masterSegment: rget(r, 'Master_Segment', 'Master Segment'),
             }));
             setCustomerMonthly(cm);
-            const idx: any = {};
+
+            // Infer customers from this file
+            const custMap = new Map();
+            cm.forEach((r) => {
+              if (!r.customerId && !r.customerName) return;
+              const cid = r.customerId || r.customerName;
+              if (!custMap.has(cid)) {
+                custMap.set(cid, {
+                  id: cid,
+                  name: r.customerName || cid,
+                  region: r.region,
+                  state: r.state,
+                  city: r.city,
+                  masterSegment: r.masterSegment, // [CHANGE #2] Store Master Segment
+                  products: [],
+                });
+              }
+              const cust = custMap.get(cid);
+              if (
+                r.category &&
+                r.sku &&
+                !cust.products.some(
+                  (p) => p.category === r.category && p.sku === r.sku,
+                )
+              ) {
+                cust.products.push({ category: r.category, sku: r.sku });
+              }
+            });
+            if (custMap.size > 0) setCustomers(Array.from(custMap.values()));
+
+            // Infer market index
+            const idx = {};
             cm.forEach((r) => {
               const k = `All|${r.category || 'HRC'}`;
               if (!idx[k]) idx[k] = [];
-              if (!idx[k].some((x: any) => x.date === r.month))
+              if (!idx[k].some((x) => x.date === r.month))
                 idx[k].push({ date: r.month, index: r.realizedPrice });
             });
             if (Object.keys(idx).length)
               setMarketIndex((prev) =>
-                Object.keys(prev || {}).length ? prev : idx
+                Object.keys(prev || {}).length ? prev : idx,
               );
             return;
           }
+          // This is the Transactions CSV path
           const custMap = new Map();
-          const tx: any[] = [];
+          const tx = [];
           rows.forEach((r, i) => {
             const cid =
               rget(
@@ -799,7 +872,7 @@ export default function App() {
                 'customer_id',
                 'CustomerId',
                 'CustomerID',
-                'Customer'
+                'Customer',
               ) || `U_${i}`;
             const nm =
               rget(
@@ -807,7 +880,7 @@ export default function App() {
                 'customerName',
                 'customer',
                 'CustomerName',
-                'Customer Name'
+                'Customer Name',
               ) || cid;
             const region = rget(r, 'region', 'Region') || '';
             const state = rget(r, 'state', 'State') || '';
@@ -818,12 +891,16 @@ export default function App() {
                 'category',
                 'Category',
                 'ProductCategory',
-                'Product Category'
+                'Product Category',
               ) || 'HRC'
             ).toString();
             const sku = (
               rget(r, 'sku', 'SKU', 'SO-JSW Grade', 'SKU') || ''
             ).toString();
+            
+            // [CHANGE #2] Read Master Segment here
+            const masterSegment = rget(r, 'Master_Segment', 'Master Segment');
+
             if (!custMap.has(cid))
               custMap.set(cid, {
                 id: cid,
@@ -831,74 +908,87 @@ export default function App() {
                 region,
                 state,
                 city,
+                masterSegment: masterSegment, // [CHANGE #2] Store Master Segment
                 products: [{ category, sku }],
               });
-            const dealPrice = Number(
-              rget(
-                r,
-                'dealPrice',
-                'price',
-                'Deal Price',
-                'Actual NSR Per MT'
-              ) || 0
-            );
-            const marketIdx = Number(
-              rget(r, 'marketIndex', 'index', 'Market Index', 'Market') || 0
-            );
-            const width = rget(r, 'width', 'Width')
-              ? Number(rget(r, 'width', 'Width'))
-              : null;
-            const thickness = rget(r, 'thickness', 'Thickness')
-              ? Number(rget(r, 'thickness', 'Thickness'))
-              : null;
-            const qty = Number(
-              rget(r, 'qty', 'quantity', 'Quantity', 'Actual Sales Qty') || 0
-            );
-            const date = (
-              rget(r, 'date', 'Date', 'Txn Date', 'SO Date') || ''
-            ).toString();
+            else {
+              const cust = custMap.get(cid);
+              if (
+                !cust.products.some(
+                  (p) => p.category === category && p.sku === sku,
+                )
+              ) {
+                cust.products.push({ category, sku });
+              }
+              if (!cust.masterSegment) {
+                cust.masterSegment = masterSegment;
+              }
+            }
+            
             tx.push({
               customerId: cid,
               category,
               sku,
-              width,
-              thickness,
+              width: rget(r, 'width', 'Width')
+                ? Number(rget(r, 'width', 'Width'))
+                : null,
+              thickness: rget(r, 'thickness', 'Thickness')
+                ? Number(rget(r, 'thickness', 'Thickness'))
+                : null,
               region,
               state,
               city,
-              dealPrice,
-              marketIndex: marketIdx,
-              qty,
-              date,
+              dealPrice: Number(
+                rget(
+                  r,
+                  'dealPrice',
+                  'price',
+                  'Deal Price',
+                  'Actual NSR Per MT',
+                  'Current Price (INR per MT)', // Added from your file
+                ) || 0,
+              ),
+              marketIndex: Number(
+                rget(r, 'marketIndex', 'index', 'Market Index', 'Market', 'Market Index - Monthly_Average_Price') || 0, // Added from your file
+              ),
+              qty: Number(
+                rget(r, 'qty', 'quantity', 'Quantity', 'Actual Sales Qty', 'quantity (MT)') || 0, // Added from your file
+              ),
+              date: (
+                rget(r, 'date', 'Date', 'Txn Date', 'SO Date', 'Month') || '' // Added from your file
+              ).toString(),
+              segmentNode: rget(r, 'Segment__node'), // Added from your file
             });
           });
           setTxns(tx.sort((a, b) => (a.date < b.date ? 1 : -1)));
-          setCustomers(Array.from(custMap.values()) as any);
+          setCustomers(Array.from(custMap.values()));
+          setRawRows(rows); // Also save raw rows from CSV
         },
       });
       return;
     }
-
+    
+    // This is the XLSX path (for single flat sheet)
     const reader = new FileReader();
     reader.onload = async (evt) => {
       const XLSX = await import('xlsx');
-      const data = new Uint8Array(evt.target!.result as ArrayBuffer);
+      const data = new Uint8Array(evt.target.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(ws);
-
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws);
       const get = rget;
       const custMap = new Map();
-      const monthSeries: any[] = [];
+      const monthSeries = [];
       const idxByMonth = new Map();
-      const segAgg = new Map(); // SKU|Segment__node -> prices
-      const tx: any[] = [];
-      const segDescFromFile: Record<string, string> = {};
-
-      rows.forEach((r, i) => {
+      const segAgg = new Map();
+      const tx = [];
+      const segDescFromFile = {};
+      
+      rows.forEach((r: any, i) => {
         const customerName =
           get(r, 'Customer Name', 'Ship to Party Name', 'cust') || `U_${i}`;
-        const cid = customerName;
+        const cid = customerName; // id = name for demo
         const sku = get(r, 'SKU');
         const category = 'HRC';
         const month = String(get(r, 'Month') || '');
@@ -908,33 +998,10 @@ export default function App() {
         const qty = Number(get(r, 'quantity (MT)') || 0);
         const price = Number(get(r, 'Current Price (INR per MT)') || 0);
         const mi = Number(get(r, 'Market Index - Monthly_Average_Price') || 0);
-        const segNode = get(r, 'Segment__node');
-        const isOutlier = Boolean(get(r, '__is_outlier'));
-        const endUseIndustry = get(
-          r,
-          'endUseIndustry',
-          'EndUseIndustry',
-          'End Use Industry',
-          'end use industry',
-          'Industry'
-        );
-        const width = Number(get(r, 'SO Width (mm)', 'Width (mm)', 'width'));
-        const thickness = Number(
-          get(
-            r,
-            'SO_Thickness (mm)',
-            'SO Thickness (mm)',
-            'Thickness (mm)',
-            'thickness'
-          )
-        );
-        const segDescription = get(
-          r,
-          'Segment_Description',
-          'Segment Description',
-          'Seg_Desc',
-          'Description'
-        );
+        const node = get(r, 'Segment__node');
+        
+        // [CHANGE #2] Read Master Segment here
+        const masterSegment = get(r, 'Master_Segment', 'Master Segment');
 
         if (!custMap.has(cid))
           custMap.set(cid, {
@@ -943,10 +1010,24 @@ export default function App() {
             region,
             state,
             city,
+            masterSegment: masterSegment, // [CHANGE #2] Store Master Segment
             products: [{ category, sku }],
           });
-
-        if (month && sku && price) {
+        else {
+          const cust = custMap.get(cid);
+          if (
+            !cust.products.some(
+              (p) => p.category === category && p.sku === sku,
+            )
+          ) {
+            cust.products.push({ category, sku });
+          }
+          if (!cust.masterSegment) {
+             cust.masterSegment = masterSegment;
+          }
+        }
+        
+        if (month && price > 0)
           monthSeries.push({
             customerId: cid,
             customerName,
@@ -958,708 +1039,701 @@ export default function App() {
             region,
             state,
             city,
-            endUseIndustry,
+            endUseIndustry: get(r, 'End Use industry'),
+            masterSegment: masterSegment, // [CHANGE #2] Also store in monthly if needed
           });
+        if (month && mi > 0 && !idxByMonth.has(month))
+          idxByMonth.set(month, mi);
+        const nodeKey = `${sku}|${node}`;
+        if (
+          sku &&
+          node !== undefined &&
+          node !== null &&
+          (price > 0 || qty > 0)
+        ) {
+          if (!segAgg.has(nodeKey))
+            segAgg.set(nodeKey, { prices: [], qtys: [] });
+          segAgg.get(nodeKey).prices.push(price);
+          segAgg.get(nodeKey).qtys.push(qty);
         }
-        if (month && mi) idxByMonth.set(month, mi);
-
-        if (sku && segNode !== undefined && segNode !== null) {
-          const key = `${sku}|${segNode}`;
-          if (!segAgg.has(key)) segAgg.set(key, []);
-          if (!isOutlier && price) (segAgg.get(key) as number[]).push(price);
-          if (segDescription) segDescFromFile[key] = String(segDescription);
-        }
-
-        if (sku)
+        const desc = get(
+          r,
+          'Segment_Description',
+          'SegmentDescription',
+          'Description',
+          'Segment Description',
+        );
+        if (nodeKey && desc && !segDescFromFile[nodeKey])
+          segDescFromFile[nodeKey] = desc;
+        if (price > 0 && qty > 0)
           tx.push({
             customerId: cid,
             category,
             sku,
-            width,
-            thickness,
+            width: null,
+            thickness: null,
             region,
             state,
             city,
             dealPrice: price,
             marketIndex: mi,
             qty,
-            date: month,
-            segmentNode: segNode,
+            date: month + '-01', // approx date
+            segmentNode: node,
           });
       });
-
-      setRawRows(rows);
-      setCustomers(Array.from(custMap.values()) as any);
+      setCustomers(Array.from(custMap.values()));
       setCustomerMonthly(monthSeries);
-      setTxns(tx.sort((a, b) => (a.date < b.date ? 1 : -1)));
-      setMarketIndex({
-        [`All|HRC`]: Array.from(idxByMonth.entries())
-          .sort((a: any, b: any) => (a[0] < b[0] ? -1 : 1))
-          .map(([date, index]) => ({ date, index })),
-      });
-      const segs = Array.from(segAgg.entries()).map(([key, arr]: any) => {
-        const sorted = arr.slice().sort((a: number, b: number) => a - b);
-        const median = sorted.length
-          ? sorted[Math.floor(sorted.length / 2)]
-          : undefined;
-        const min = sorted.length ? sorted[0] : undefined;
-        const max = sorted.length ? sorted[sorted.length - 1] : undefined;
-        return { key, name: key, priceRange: [min, max], median };
-      });
+      const miData = Array.from(idxByMonth.entries())
+        .map(([date, index]) => ({ date, index }))
+        .sort((a, b) => (a.date < b.date ? -1 : 1));
+      setMarketIndex((prev) =>
+        Object.keys(prev || {}).length
+          ? prev
+          : { [`All|HRC`]: miData, [`${region}|HRC`]: miData },
+      );
+      const segs = Array.from(segAgg.entries()).map(
+        ([key, { prices, qtys }]: any) => {
+          const p = prices.filter((p) => p > 0).sort((a, b) => a - b);
+          const min = p[0] ?? 0;
+          const max = p[p.length - 1] ?? 0;
+          const q1 = p[Math.floor(p.length * 0.25)] ?? min;
+          const q3 = p[Math.floor(p.length * 0.75)] ?? max;
+          const totalQty = qtys.reduce((a, b) => a + b, 0);
+          return { key, minPrice: q1, maxPrice: q3, totalQty };
+        },
+      );
       setSegments(segs);
-      if (Object.keys(segDescFromFile).length)
-        setSegDescMap((prev) => ({ ...prev, ...segDescFromFile }));
+      setTxns(tx.sort((a, b) => (a.date < b.date ? 1 : -1)));
+      setRawRows(rows);
+      setSegDescMap(segDescFromFile);
     };
     reader.readAsArrayBuffer(f);
   }
 
-  const openRangeDeepDive = () => {
-    if (!seg || !seg.priceRange) return;
-    const [minP, maxP] = seg.priceRange.map(Number);
-    const rows = (rawRows || [])
-      .filter((r) => {
-        const rSku = rget(r, 'SKU');
-        const rNode = rget(r, 'Segment__node');
-        const price = Number(
-          rget(
-            r,
-            'Current Price (INR per MT)',
-            'Actual NSR Per MT',
-            'Deal Price'
-          ) || 0
-        );
-        const isOutlier = Boolean(rget(r, '__is_outlier'));
-        if (rSku?.toString() !== sku?.toString()) return false;
-        if (String(rNode) !== String(segmentNode)) return false;
-        if (!Number.isFinite(price)) return false;
-        if (rangeExcludeOutliers && isOutlier) return false;
-        if (!(price >= minP && price <= maxP)) return false;
-        if (rangeFYOnly) {
-          const ym = String(rget(r, 'Month') || '').slice(0, 7);
-          if (ym < '2024-04' || ym > '2025-03') return false;
-        }
-        return true;
-      })
-      .map((r) => {
-        const ym = String(rget(r, 'Month') || '').slice(0, 7);
-        const deal = Number(
-          rget(
-            r,
-            'Current Price (INR per MT)',
-            'Actual NSR Per MT',
-            'Deal Price'
-          ) || 0
-        );
-        const idx = Number(
-          rget(
-            r,
-            'Market Index - Monthly_Average_Price',
-            'Market Index',
-            'Market'
-          ) || 0
-        );
-        const delta =
-          Number.isFinite(idx) && idx !== 0 ? Math.round(deal - idx) : null;
-        return {
-          date: monYY(ym + '-01'),
-          customer: String(
-            rget(r, 'Customer Name', 'Ship to Party Name', 'cust') || '—'
-          ),
-          industry:
-            rget(r, 'endUseIndustry', 'Industry', 'End Use Industry') || '—',
-          dealPrice: deal,
-          marketIndex: Number.isFinite(idx) ? idx : null,
-          delta,
-          qty: Number(
-            rget(r, 'quantity (MT)', 'Quantity', 'Actual Sales Qty') || 0
-          ),
-          width: rget(r, 'SO Width (mm)', 'Width (mm)', 'width') ?? '—',
-          thickness:
-            rget(
-              r,
-              'SO_Thickness (mm)',
-              'SO Thickness (mm)',
-              'Thickness (mm)',
-              'thickness'
-            ) ?? '—',
-          region: rget(r, 'Region') || '—',
-          state: rget(r, 'State') || '—',
-          city: rget(r, 'Ship To City', 'City') || '—',
-        };
-      })
-      .sort((a, b) => (a.date < b.date ? 1 : -1));
-    setRangeRows(rows);
-    setRangeOpen(true);
-  };
-
-  const downloadRangeCSV = () => {
-    if (!rangeRows.length) return;
-    const headers = [
-      'Date',
-      'Customer',
-      'Industry',
-      'Deal Price (₹/MT)',
-      'Market Index (₹/MT)',
-      'Δ vs Index',
-      'Qty (MT)',
-      'Width (mm)',
-      'Thickness (mm)',
-      'Region',
-      'State',
-      'City',
-    ];
-    const lines = [headers.join(',')].concat(
-      rangeRows.map((r) =>
-        [
-          r.date,
-          r.customer,
-          r.industry,
-          r.dealPrice,
-          r.marketIndex ?? '',
-          r.delta ?? '',
-          r.qty,
-          r.width,
-          r.thickness,
-          r.region,
-          r.state,
-          r.city,
-        ]
-          .map((v) =>
-            v === null || v === undefined ? '' : String(v).replace(/"/g, '""')
-          )
-          .map((v) => (/[,\n]/.test(v) ? `"${v}"` : v))
-          .join(',')
-      )
-    );
-    const blob = new Blob([lines.join('\n')], {
-      type: 'text/csv;charset=utf-8;',
+  async function handleFullUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const XLSX = await import('xlsx');
+    const data = await f.arrayBuffer();
+    const wb = XLSX.read(data, { type: 'array' });
+    const get = rget;
+    const sheet = (name: string) => {
+      const ws = wb.Sheets[name];
+      if (!ws) {
+        console.warn(`Sheet "${name}" not found.`);
+        return [];
+      }
+      return XLSX.utils.sheet_to_json(ws);
+    };
+    // 1. Customers
+    const custMap = new Map();
+    sheet('Customers').forEach((r: any) => {
+      const id = get(r, 'id', 'Customer ID');
+      if (!id) return;
+      custMap.set(String(id), {
+        id: String(id),
+        name: get(r, 'name', 'Customer Name'),
+        region: get(r, 'region', 'Region'),
+        state: get(r, 'state', 'State'),
+        city: get(r, 'city', 'City'),
+        // [CHANGE #2] Read Master Segment from Customer sheet if it exists
+        masterSegment: get(r, 'Master_Segment', 'Master Segment'),
+        products: [],
+      });
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `range_deep_dive_${sku}_node_${segmentNode}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  useEffect(() => {
-    try {
-      console.assert(Array.isArray(behaviorChips), 'Behavior chips ready');
-      const _idx =
-        marketIndex[`${region}|${category}`] ||
-        marketIndex[`All|${category}`] ||
-        [];
-      if (!_idx.length)
-        console.warn('No index series found (ok with fresh uploads).');
-    } catch (e) {
-      console.warn('Smoke tests warning:', e);
-    }
-  }, [behaviorChips, marketIndex, region, category]);
-
-  /* ================== RENDER ================== */
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-
-      <main
-        className={`flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 ${
-          sidebarOpen ? 'ml-64' : 'ml-20'
-        }`}
-      >
-        {/* Page Header */}
-        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-          <h1
-            className="text-2xl font-semibold"
-            style={{ color: JSW_COLORS.primary }}
-          >
-            Customer Pricing
-          </h1>
-          <div className="hidden sm:flex items-center gap-3 ml-auto">
-            <div className="badge border-slate-300 text-slate-600">
-              Date{' '}
-              <span className="ml-1 font-semibold">
-                {new Date().toISOString().slice(0, 10)}
-              </span>
-            </div>
-            <div className="badge border-slate-300 text-slate-600">
-              Environment <span className="ml-1 font-semibold">Demo</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Header card: Customer + Uploads */}
-        <div className="card p-4 mb-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <Select
-              label="Customer"
-              value={customerId}
-              onChange={(e) => setCustomerId(e.target.value)}
-              options={customers.map((c) => [c.id, c.name])}
-              wrapperClassName="w-full sm:w-auto sm:min-w-[300px] sm:max-w-xs"
-            />
-            <div className="flex items-center gap-3 ml-auto">
-              <input
-                id="dataInput"
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleDataUpload}
-                className="hidden"
-              />
-              <label
-                htmlFor="dataInput"
-                className="btn-ghost"
-                style={{ color: JSW_COLORS.primary }}
-              >
-                Upload Excel/CSV
-              </label>
-
-              <input
-                id="descInput"
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleDescUpload}
-                className="hidden"
-              />
-              <label
-                htmlFor="descInput"
-                className="btn-ghost"
-                style={{ color: JSW_COLORS.primary }}
-              >
-                Upload Descriptions
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* Stat cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-              label="Median Price"
-              value={INR(seg?.median)}
-              color="blue"
-              help={`SKU: ${sku} | Node: ${segmentNode || 'N/A'}`}
-            />
-            <StatCard
-              label="Segment Price Range"
-              value={`${INR(seg?.priceRange?.[0])} – ${INR(
-                seg?.priceRange?.[1]
-              )}`}
-              color="green"
-              help="Min – Max (non-outlier)"
-              onClick={openRangeDeepDive}
-            />
-            <StatCard
-              label="Last Txn Price & Quantity"
-              value={INR(lastTxnForNode?.dealPrice)}
-              color="red"
-              help={`Qty: ${fmtInt(lastTxnForNode?.qty)} MT | On: ${
-                lastTxnForNode?.date || 'N/A'
-              }`}
-            />
-          </div>
-
-          <SectionCard
-            title="Price Simulation Parameters"
-            right={`Customer: ${selectedCustomer?.name || '...'}`}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="space-y-4">
-                <Select
-                  label="Product Category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  options={categoriesForCustomer}
-                />
-                <Select
-                  label="Product SKU"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  options={skusForCategory}
-                />
-                <Select
-                  label="Micro-Segment (Node)"
-                  value={segmentNode}
-                  onChange={(e) => setSegmentNode(e.target.value)}
-                  options={eligibleNodes}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Select
-                  label="Region"
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  options={regions}
-                />
-                <Select
-                  label="State"
-                  value={stateName}
-                  onChange={(e) => setStateName(e.target.value)}
-                  options={statesForRegion}
-                />
-                <Select
-                  label="City"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  options={citiesForState}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Select
-                  label="Width (mm)"
-                  value={width}
-                  onChange={(e) => setWidth(e.target.value)}
-                  options={widths.map(String)}
-                  optional
-                />
-                <Select
-                  label="Thickness (mm)"
-                  value={thickness}
-                  onChange={(e) => setThickness(e.target.value)}
-                  options={thicknesses.map(String)}
-                  optional
-                />
-                <Input
-                  label="Quantity (MT)"
-                  type="number"
-                  value={qty}
-                  onChange={(e) => setQty(e.target.value)}
-                />
-              </div>
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Segment Description"
-            right={`Node: ${segmentNode || 'N/A'}`}
-          >
-            <p
-              className="text-sm leading-relaxed"
-              style={{ color: JSW_COLORS.ink }}
-            >
-              {segDesc}
-            </p>
-          </SectionCard>
-
-          <SectionCard title="Customer Behavior Profile">
-            {/* Move the description (oneLiner) to its own line */}
-            <p className="text-sm text-slate-600 leading-relaxed mb-4">
-              {oneLiner}
-            </p>
-
-            {/* Behavior chips grid */}
-            <div className="flex flex-wrap gap-3">
-              {behaviorChips.map(([label, value]) => (
-                <div
-                  key={label}
-                  className="flex-shrink-0 bg-white rounded-xl px-4 py-2 border shadow-sm"
-                >
-                  <div className="text-[11px] uppercase tracking-wide text-slate-500">
-                    {label}
-                  </div>
-                  <div
-                    className="font-semibold text-sm"
-                    style={{ color: 'var(--brand)' }}
-                  >
-                    {value}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Price History (vs Market Index)"
-            bodyClassName="h-96"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={combinedSeries}
-                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" style={{ fontSize: 12 }} />
-                <YAxis
-                  width={60}
-                  style={{ fontSize: 12 }}
-                  tickFormatter={(v) => `₹${Math.round((v as number) / 1000)}k`}
-                />
-                <Tooltip formatter={(value, name) => [INR(value), name]} />
-                <Line
-                  type="monotone"
-                  dataKey="index"
-                  name="Market Index"
-                  stroke={JSW_COLORS.primary}
-                  strokeOpacity={0.6}
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="cust"
-                  name="Customer Price"
-                  stroke={JSW_COLORS.ink}
-                  strokeWidth={2}
-                  connectNulls
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </SectionCard>
-
-          <SectionCard title="Recent Transactions (Last 10 for this SKU)">
-            <TxnTable txns={recentTxns} />
-          </SectionCard>
-        </div>
-      </main>
-
-      {/* Deep Dive Modal */}
-      <Modal
-        title={`Deep Dive: ${sku} | Node ${segmentNode}`}
-        open={rangeOpen}
-        onClose={() => setRangeOpen(false)}
-        footer={
-          <>
-            <div className="flex gap-4">
-              <Checkbox
-                label="FY 2024-25 Only"
-                checked={rangeFYOnly}
-                onChange={(e) => setRangeFYOnly(e.target.checked)}
-              />
-              <Checkbox
-                label="Exclude Outliers"
-                checked={rangeExcludeOutliers}
-                onChange={(e) => setRangeExcludeOutliers(e.target.checked)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <button onClick={openRangeDeepDive} className="btn-ghost">
-                Refresh
-              </button>
-              <button onClick={downloadRangeCSV} className="btn-primary">
-                Download CSV
-              </button>
-            </div>
-          </>
+    // 2. Products
+    sheet('Products').forEach((r: any) => {
+      const cid = get(r, 'customerId', 'Customer ID');
+      const cust = custMap.get(String(cid));
+      if (!cust) return;
+      cust.products.push({
+        category: get(r, 'category', 'Category'),
+        sku: get(r, 'sku', 'SKU'),
+      });
+    });
+    setCustomers(Array.from(custMap.values()));
+    // 3. Transactions
+    const tx = sheet('Transactions').map((r: any) => ({
+      customerId: String(get(r, 'customerId', 'Customer ID')),
+      category: get(r, 'category', 'Category'),
+      sku: get(r, 'sku', 'SKU'),
+      width: get(r, 'width', 'Width') ? Number(get(r, 'width', 'Width')) : null,
+      thickness: get(r, 'thickness', 'Thickness')
+        ? Number(get(r, 'thickness', 'Thickness'))
+        : null,
+      region: get(r, 'region', 'Region'),
+      state: get(r, 'state', 'State'),
+      city: get(r, 'city', 'City'),
+      dealPrice: Number(get(r, 'dealPrice', 'Deal Price') || 0),
+      marketIndex: Number(get(r, 'marketIndex', 'Market Index') || 0),
+      qty: Number(get(r, 'qty', 'Quantity') || 0),
+      date: get(r, 'date', 'Date'),
+      segmentNode: get(r, 'Segment__node'), // Added from your file
+    }));
+    setTxns(tx.sort((a, b) => (a.date < b.date ? 1 : -1)));
+    // 4. Market Index
+    const idx = {};
+    sheet('MarketIndex').forEach((r: any) => {
+      const key = `${get(r, 'region', 'Region')}|${get(r, 'category')}`;
+      if (!idx[key]) idx[key] = [];
+      idx[key].push({
+        date: get(r, 'date', 'Date'),
+        index: Number(get(r, 'index', 'Index') || 0),
+      });
+    });
+    Object.values(idx).forEach((arr: any) =>
+      arr.sort((a, b) => (a.date < b.date ? -1 : 1)),
+    );
+    setMarketIndex(idx);
+    // 5. Segments
+    const segs = sheet('Segments').map((r: any) => ({
+      key: get(r, 'key', 'Key'),
+      minPrice: Number(get(r, 'minPrice', 'Min Price') || 0),
+      maxPrice: Number(get(r, 'maxPrice', 'Max Price') || 0),
+      totalQty: Number(get(r, 'totalQty', 'Total Qty') || 0),
+    }));
+    setSegments(segs);
+    // 6. Customer Monthly (optional)
+    const cm = sheet('CustomerMonthly').map((r: any) => ({
+      customerId: String(get(r, 'customerId', 'Customer ID')),
+      customerName: get(r, 'customerName', 'Customer Name'),
+      category: get(r, 'category', 'Category'),
+      sku: get(r, 'sku', 'SKU'),
+      month: String(get(r, 'month', 'Month')),
+      realizedPrice: Number(get(r, 'realizedPrice', 'Realized Price') || 0),
+      qty: Number(get(r, 'qty', 'Quantity') || 0),
+      region: get(r, 'region', 'Region'),
+      state: get(r, 'state', 'State'),
+      city: get(r, 'city', 'City'),
+      endUseIndustry: get(r, 'endUseIndustry', 'End Use Industry'),
+      // [CHANGE #2] Read Master Segment from Monthly sheet if it exists
+      masterSegment: get(r, 'Master_Segment', 'Master Segment'),
+    }));
+    if (cm.length) setCustomerMonthly(cm);
+    // 7. Raw Rows (optional, for behavior)
+    const rr = sheet('RawData');
+    if (rr.length) setRawRows(rr);
+    // 8. Descriptions (optional)
+    const desc = sheet('Descriptions');
+    if (desc.length) {
+      const map = {};
+      desc.forEach((r: any) => {
+        const SKU = get(r, 'SKU', 'sku', 'SO-JSW Grade');
+        const node = get(r, 'Segment__node', 'Segment Node');
+        const d = get(
+          r,
+          'Segment_Description',
+          'Segment Description',
+        );
+        if (SKU && node !== undefined && node !== null && d) {
+          map[`${String(SKU)}|${String(node)}`] = String(d);
         }
-      >
-        <p className="mb-4 text-sm text-slate-600">
-          Showing {rangeRows.length} transactions within the segment's
-          non-outlier price range of {INR(seg?.priceRange?.[0])} –{' '}
-          {INR(seg?.priceRange?.[1])}.
-        </p>
-        <div className="w-full overflow-x-auto border rounded-lg">
-          <table className="table min-w-[1200px]">
-            <thead>
-              <tr>
-                {[
-                  'Date',
-                  'Customer',
-                  'Industry',
-                  'Deal Price',
-                  'Index',
-                  'Δ vs Index',
-                  'Qty (MT)',
-                  'Width',
-                  'Thickness',
-                  'Region',
-                  'State',
-                  'City',
-                ].map((h) => (
-                  <th key={h}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rangeRows.map((r, idx) => (
-                <tr key={idx} className="border-b hover:bg-slate-50">
-                  <td>{r.date}</td>
-                  <td className="font-medium">{r.customer}</td>
-                  <td>{r.industry}</td>
-                  <td className="font-semibold">{INR(r.dealPrice)}</td>
-                  <td>{INR(r.marketIndex)}</td>
-                  <td
-                    className={`${
-                      Number(r.delta) >= 0 ? 'text-green-700' : 'text-red-700'
-                    } font-semibold`}
-                  >
-                    {r.delta == null
-                      ? '—'
-                      : `${r.delta >= 0 ? '+' : ''}${fmtInt(r.delta)}`}
-                  </td>
-                  <td>{fmtInt(r.qty)}</td>
-                  <td>{r.width}</td>
-                  <td>{r.thickness}</td>
-                  <td>{r.region}</td>
-                  <td>{r.state}</td>
-                  <td>{r.city}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Modal>
-    </div>
-  );
-}
+      });
+      setSegDescMap(map);
+    }
+  }
 
-/* ======= Form & misc components (styled) ======= */
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-  optional = false,
-  wrapperClassName = '',
-}) {
-  return (
-    <label className={`block w-full ${wrapperClassName}`}>
-      <span className="text-xs text-slate-600">{label}</span>
-      <select value={value || ''} onChange={onChange} className="select mt-1">
-        <option value="">{optional ? 'All' : 'Select...'}</option>
-        {(options || []).map((opt: any) => {
-          const [val, display] = Array.isArray(opt) ? opt : [opt, opt];
-          return (
-            <option key={val} value={val}>
-              {display || val}
-            </option>
-          );
-        })}
-      </select>
-    </label>
-  );
-}
-function Input({ label, type, value, onChange }) {
-  return (
-    <label className="block w-full">
-      <span className="text-xs text-slate-600">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        className="input mt-1"
-      />
-    </label>
-  );
-}
-function Checkbox({ label, checked, onChange }) {
-  return (
-    <label className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="rounded border-slate-300 text-blue-600 shadow-sm focus:ring-blue-500"
-      />
-      <span className="text-sm">{label}</span>
-    </label>
-  );
-}
-function StatCard({ label, value, color, help, onClick }) {
-  const colorMap: Record<string, string> = {
-    blue: 'text-blue-700 bg-blue-50 border-blue-200',
-    green: 'text-green-700 bg-green-50 border-green-200',
-    red: 'text-red-700 bg-red-50 border-red-200',
-  };
-  const pill = colorMap[color] || 'text-slate-700 bg-slate-50 border-slate-200';
+  /* ====== Modal logic ====== */
+  function handlePriceClick(segKey) {
+    if (!segKey || !rawRows.length) {
+      setRangeRows([]);
+      setRangeOpen(false);
+      return;
+    }
+    const [sku, node] = segKey.split('|');
+    let rows = rawRows.filter(
+      (r) =>
+        String(rget(r, 'SKU')) === sku &&
+        String(rget(r, 'Segment__node')) === node,
+    );
+    if (rangeFYOnly) {
+      rows = rows.filter((r) =>
+        String(rget(r, 'Month', 'date')).startsWith('2024'),
+      );
+    }
+    const prices = rows
+      .map((r) =>
+        Number(rget(r, 'Current Price (INR per MT)', 'dealPrice') || 0),
+      )
+      .filter((p) => p > 0)
+      .sort((a, b) => a - b);
+    if (rangeExcludeOutliers && prices.length > 10) {
+      const q1 = prices[Math.floor(prices.length * 0.25)];
+      const q3 = prices[Math.floor(prices.length * 0.75)];
+      const iqr = q3 - q1;
+      const min = q1 - 1.5 * iqr;
+      const max = q3 + 1.5 * iqr;
+      rows = rows.filter((r) => {
+        const p = Number(
+          rget(r, 'Current Price (INR per MT)', 'dealPrice') || 0,
+        );
+        return p >= min && p <= max;
+      });
+    }
+    // Map to txn format
+    const tx = rows.map((r) => ({
+      customerId: rget(r, 'Customer Name', 'Ship to Party Name', 'cust'),
+      category: 'HRC',
+      sku,
+      width: null,
+      thickness: null,
+      region: rget(r, 'Region'),
+      state: rget(r, 'State'),
+      city: rget(r, 'Ship To City'),
+      dealPrice: Number(rget(r, 'Current Price (INR per MT)', 'dealPrice') || 0),
+      marketIndex: Number(
+        rget(r, 'Market Index - Monthly_Average_Price') || 0,
+      ),
+      qty: Number(rget(r, 'quantity (MT)') || 0),
+      date: String(rget(r, 'Month', 'date')),
+      segmentNode: node,
+    }));
+    setRangeRows(tx.sort((a, b) => (a.date < b.date ? 1 : -1)));
+    setRangeOpen(true);
+  }
+  /* ============= RENDER ============== */
   return (
     <div
-      className={`card ${onClick ? 'cursor-pointer hover:shadow-lg' : ''}`}
-      onClick={onClick}
+      className="flex min-h-screen"
+      style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      <div className="p-5">
-        <div className="flex items-center justify-between">
-          <div className={`badge border ${pill}`}>{label}</div>
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 border text-slate-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6v12M6 12h12"
+      <style jsx global>{`
+        /* [NO CHANGE] This is the original style block */
+      `}</style>
+      {/* Sidebar */}
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      {/* Main content */}
+      <div
+        className={`relative w-full min-h-screen transition-all duration-300 ${
+          sidebarOpen ? 'pl-64' : 'pl-20'
+        }`}
+        style={{ background: JSW_COLORS.light }}
+      >
+        <div className="flex-1 p-4 sm:p-6 lg:p-10 space-y-6 max-w-[1800px] mx-auto">
+          {/* Header bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                className="text-slate-600 hover:text-slate-900"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </button>
+              <h1
+                className="text-xl md:text-2xl font-semibold"
+                style={{ color: JSW_COLORS.ink }}
+              >
+                Customer Price Guidance
+              </h1>
+            </div>
+            {/* Top-right actions */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm px-3 py-2 cursor-pointer hover:bg-slate-50">
+                Upload Data (XLSX/CSV)
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".csv,.xlsx"
+                  onChange={handleDataUpload}
+                />
+              </label>
+              <label className="text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm px-3 py-2 cursor-pointer hover:bg-slate-50">
+                Upload Segments (Desc)
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".csv,.xlsx"
+                  onChange={handleDescUpload}
+                />
+              </label>
+              <label className="text-xs font-medium text-white border rounded-lg shadow-sm px-3 py-2 cursor-pointer" style={{backgroundColor: 'var(--brand)', borderColor: 'var(--brand-dark)'}}>
+                Upload Full Workbook
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".xlsx"
+                  onChange={handleFullUpload}
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+              <FilterSelect
+                label="Customer"
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                options={customers.map((c) => [c.id, c.name])}
               />
-            </svg>
-          </span>
+              <FilterSelect
+                label="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                options={categoriesForCustomer}
+              />
+              <FilterSelect
+                label="SKU"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                options={skusForCategory}
+              />
+              <FilterSelect
+                label="Node"
+                value={segmentNode}
+                onChange={(e) => setSegmentNode(e.target.value)}
+                options={eligibleNodes}
+              />
+              <FilterSelect
+                label="Region"
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                options={regions}
+              />
+              <FilterSelect
+                label="State"
+                value={stateName}
+                onChange={(e) => setStateName(e.target.value)}
+                options={statesForRegion}
+              />
+              <FilterSelect
+                label="City"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                options={citiesForState}
+              />
+              <FilterInput
+                label="Qty (MT)"
+                type="number"
+                value={qty}
+                onChange={(e) => setQty(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          {/* Main content grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Col 1 */}
+            <div className="space-y-6">
+              <SectionCard title="Customer Profile">
+                <CustomerInfo customer={selectedCustomer} />
+              </SectionCard>
+
+              {/* [CHANGE #3] NEW CARD ADDED HERE */}
+              <SectionCard title="Master Segment">
+                <p className="text-xl font-semibold text-slate-800">
+                  {masterSegment}
+                </p>
+              </SectionCard>
+              {/* === END OF NEW CARD === */}
+
+              <SectionCard
+                title="Segment Price Range"
+                right={`Node: ${segmentNode}`}
+              >
+                <SegmentPriceRange
+                  min={seg?.minPrice}
+                  max={seg?.maxPrice}
+                  onClick={() => handlePriceClick(segKey)}
+                />
+              </SectionCard>
+              <SectionCard
+                title="Segment Description"
+                right={`Total Qty (FY25): ${fmtInt(seg?.totalQty)} MT`}
+              >
+                <p className="text-slate-800">{segDesc}</p>
+              </SectionCard>
+            </div>
+
+            {/* Col 2 */}
+            <div className="space-y-6">
+              <SectionCard
+                title="Customer Behavior Profile"
+                right={
+                  lastTxnForNode
+                    ? `Last purchase (node): ${lastTxnForNode.date} @ ${INR(
+                        lastTxnForNode.dealPrice,
+                      )}`
+                    : 'No purchase in node'
+                }
+                subtitle={oneLiner}
+              >
+                <div className="flex flex-wrap gap-2">
+                  {behaviorChips.map(([label, value]) => badge(label, value))}
+                </div>
+              </SectionCard>
+              <SectionCard
+                title="Price History (Customer vs. Market)"
+                bodyClassName="h-96"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={combinedSeries}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis
+                      dataKey="date"
+                      dy={10}
+                      tick={{ fontSize: 11, fill: '#475569' }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: '#475569' }}
+                      tickFormatter={fmtInt}
+                    />
+                    <Tooltip
+                      formatter={(v) => INR(v)}
+                      labelStyle={{ fontSize: 13, fontWeight: 'bold' }}
+                      itemStyle={{ fontSize: 12 }}
+                      contentStyle={{
+                        borderRadius: '12px',
+                        borderColor: '#e2e8f0',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="index"
+                      stroke="#94a3b8"
+                      strokeWidth={2}
+                      name="Market Index"
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="cust"
+                      stroke={'var(--brand-accent)'}
+                      strokeWidth={2}
+                      name="Customer Price"
+                      connectNulls
+                      dot={{ r: 3, fill: 'var(--brand-accent)' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </SectionCard>
+            </div>
+
+            {/* Bottom Row: Table */}
+            <div className="lg:col-span-2">
+              <SectionCard
+                title="Recent Transactions (SKU)"
+                bodyClassName="h-96 overflow-y-auto"
+              >
+                <TransactionTable txns={recentTxns} />
+              </SectionCard>
+            </div>
+          </div>
+
+          <Modal
+            title={`Deep Dive: ${segKey}`}
+            open={rangeOpen}
+            onClose={() => setRangeOpen(false)}
+            footer={
+              <>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={rangeFYOnly}
+                      onChange={(e) => setRangeFYOnly(e.target.checked)}
+                    />
+                    FY25 Only
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={rangeExcludeOutliers}
+                      onChange={(e) =>
+                        setRangeExcludeOutliers(e.target.checked)
+                      }
+                    />
+                    Exclude Outliers
+                  </label>
+                </div>
+                <span className="text-sm text-slate-600">
+                  Showing {rangeRows.length} deals
+                </span>
+              </>
+            }
+          >
+            <TransactionTable txns={rangeRows} />
+          </Modal>
         </div>
-        <div
-          className="text-3xl font-extrabold mt-3"
-          style={{ color: JSW_COLORS.primary }}
-        >
-          {value}
-        </div>
-        <div className="text-xs text-slate-500 mt-1">{help || '\u00A0'}</div>
       </div>
     </div>
   );
 }
-function TxnTable({ txns = [] }) {
-  if (!txns.length)
-    return (
-      <p className="text-slate-500">
-        No recent transactions found for this selection.
-      </p>
-    );
+
+/* ============== SUB-COMPONENTS ============= */
+function FilterSelect({ label, value, onChange, options }) {
   return (
-    <div className="w-full overflow-x-auto border rounded-lg">
-      <table className="table min-w-[800px]">
-        <thead>
-          <tr>
-            {[
-              'Date',
-              'Deal Price',
-              'Market Index',
-              'Δ vs Index',
-              'Qty (MT)',
-              'W x T (mm)',
-              'Location',
-            ].map((h) => (
-              <th key={h}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {txns.map((t, idx) => {
-            const delta =
-              Number.isFinite(t.dealPrice) && Number.isFinite(t.marketIndex)
-                ? t.dealPrice - t.marketIndex
-                : null;
-            return (
-              <tr key={idx} className="border-b hover:bg-slate-50">
-                <td>{t.date}</td>
-                <td className="font-semibold">{INR(t.dealPrice)}</td>
-                <td>{INR(t.marketIndex)}</td>
-                <td
-                  className={`${
-                    delta === null
-                      ? ''
-                      : delta >= 0
-                      ? 'text-green-700'
-                      : 'text-red-700'
-                  } font-semibold`}
-                >
-                  {delta === null
-                    ? '—'
-                    : `${delta >= 0 ? '+' : ''}${fmtInt(delta)}`}
-                </td>
-                <td>{fmtInt(t.qty)}</td>
-                <td>
-                  {t.width || '—'} x {t.thickness || '—'}
-                </td>
-                <td>{t.city || t.state || '—'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="w-full">
+      <label className="block text-xs font-medium text-slate-600 mb-1">
+        {label}
+      </label>
+      <select
+        className="w-full text-sm bg-white border border-slate-300 rounded-lg shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        value={value}
+        onChange={onChange}
+      >
+        {options.map((opt) => {
+          const [val, display] = Array.isArray(opt) ? opt : [opt, opt];
+          return (
+            <option key={val} value={val}>
+              {display}
+            </option>
+          );
+        })}
+      </select>
     </div>
+  );
+}
+function FilterInput({ label, value, onChange, ...props }) {
+  return (
+    <div className="w-full">
+      <label className="block text-xs font-medium text-slate-600 mb-1">
+        {label}
+      </label>
+      <input
+        className="w-full text-sm bg-white border border-slate-300 rounded-lg shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        value={value}
+        onChange={onChange}
+        {...props}
+      />
+    </div>
+  );
+}
+
+function CustomerInfo({ customer }) {
+  if (!customer) return null;
+  const fields = [
+    ['Name', customer.name],
+    ['Region', customer.region],
+    ['State', customer.state],
+    ['City', customer.city],
+  ];
+  return (
+    <div className="space-y-2">
+      {fields.map(([label, value]) => (
+        <div key={label} className="flex justify-between text-sm">
+          <span className="text-slate-600">{label}:</span>
+          <span className="font-semibold text-slate-800">{value || '—'}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SegmentPriceRange({ min, max, onClick }) {
+  return (
+    <div
+      className="group rounded-xl p-4 cursor-pointer relative transition-all"
+      onClick={onClick}
+      style={{
+        background:
+          'linear-gradient(145deg, hsl(228, 66%, 98%), hsl(228, 66%, 95%))',
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="text-xs text-slate-500 uppercase tracking-wide font-medium">
+            Guidance Range
+          </div>
+          <div
+            className="text-3xl font-bold my-1"
+            style={{ color: 'var(--brand-accent)' }}
+          >
+            {INR(min)} – {INR(max)}
+          </div>
+        </div>
+        <div className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M13 7l5 5m0 0l-5 5m5-5H6"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransactionTable({ txns }) {
+  return (
+    <table className="min-w-full divide-y divide-slate-200 text-sm">
+      <thead className="bg-slate-50">
+        <tr className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          {[
+            'Date',
+            'Deal Price',
+            'Market Index',
+            'Δ vs Index',
+            'Qty (MT)',
+            'W x T (mm)',
+            'Location',
+          ].map((h) => (
+            <th key={h} className="px-3 py-2">{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-slate-200">
+        {txns.map((t, idx) => {
+          const delta =
+            Number.isFinite(t.dealPrice) && Number.isFinite(t.marketIndex)
+              ? t.dealPrice - t.marketIndex
+              : null;
+          return (
+            <tr key={idx} className="border-b hover:bg-slate-50">
+              <td className="px-3 py-2">{t.date}</td>
+              <td className="px-3 py-2 font-semibold">{INR(t.dealPrice)}</td>
+              <td className="px-3 py-2">{INR(t.marketIndex)}</td>
+              <td
+                className={`px-3 py-2 ${
+                  delta === null
+                    ? ''
+                    : delta >= 0
+                    ? 'text-green-700'
+                    : 'text-red-700'
+                } font-semibold`}
+              >
+                {delta === null
+                  ? '—'
+                  : `${delta >= 0 ? '+' : ''}${fmtInt(delta)}`}
+              </td>
+              <td className="px-3 py-2">{fmtInt(t.qty)}</td>
+              <td className="px-3 py-2">
+                {t.width || '—'} x {t.thickness || '—'}
+              </td>
+              <td className="px-3 py-2">{t.city || t.state || '—'}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
