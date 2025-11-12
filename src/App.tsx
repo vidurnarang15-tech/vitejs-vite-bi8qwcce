@@ -813,7 +813,7 @@ export default function App() {
                 'industry',
                 'end use industry',
               ),
-              // [CHANGE 2] Read Master Segment here
+              // [CHANGE #2] Read Master Segment here
               masterSegment: rget(r, 'Master_Segment', 'Master Segment'),
             }));
             setCustomerMonthly(cm);
@@ -830,7 +830,7 @@ export default function App() {
                   region: r.region,
                   state: r.state,
                   city: r.city,
-                  masterSegment: r.masterSegment, // [CHANGE 2] Store Master Segment
+                  masterSegment: r.masterSegment, // [CHANGE #2] Store Master Segment
                   products: [],
                 });
               }
@@ -898,7 +898,7 @@ export default function App() {
               rget(r, 'sku', 'SKU', 'SO-JSW Grade', 'SKU') || ''
             ).toString();
             
-            // [CHANGE 2] Read Master Segment here
+            // [CHANGE #2] Read Master Segment here
             const masterSegment = rget(r, 'Master_Segment', 'Master Segment');
 
             if (!custMap.has(cid))
@@ -908,7 +908,7 @@ export default function App() {
                 region,
                 state,
                 city,
-                masterSegment: masterSegment, // [CHANGE 2] Store Master Segment
+                masterSegment: masterSegment, // [CHANGE #2] Store Master Segment
                 products: [{ category, sku }],
               });
             else {
@@ -1000,7 +1000,7 @@ export default function App() {
         const mi = Number(get(r, 'Market Index - Monthly_Average_Price') || 0);
         const node = get(r, 'Segment__node');
         
-        // [CHANGE 2] Read Master Segment here
+        // [CHANGE #2] Read Master Segment here
         const masterSegment = get(r, 'Master_Segment', 'Master Segment');
 
         if (!custMap.has(cid))
@@ -1010,7 +1010,7 @@ export default function App() {
             region,
             state,
             city,
-            masterSegment: masterSegment, // [CHANGE 2] Store Master Segment
+            masterSegment: masterSegment, // [CHANGE #2] Store Master Segment
             products: [{ category, sku }],
           });
         else {
@@ -1040,7 +1040,7 @@ export default function App() {
             state,
             city,
             endUseIndustry: get(r, 'End Use industry'),
-            masterSegment: masterSegment, // [CHANGE 2] Also store in monthly if needed
+            masterSegment: masterSegment, // [CHANGE #2] Also store in monthly if needed
           });
         if (month && mi > 0 && !idxByMonth.has(month))
           idxByMonth.set(month, mi);
@@ -1137,7 +1137,7 @@ export default function App() {
         region: get(r, 'region', 'Region'),
         state: get(r, 'state', 'State'),
         city: get(r, 'city', 'City'),
-        // [CHANGE 2] Read Master Segment from Customer sheet if it exists
+        // [CHANGE #2] Read Master Segment from Customer sheet if it exists
         masterSegment: get(r, 'Master_Segment', 'Master Segment'),
         products: [],
       });
@@ -1207,7 +1207,7 @@ export default function App() {
       state: get(r, 'state', 'State'),
       city: get(r, 'city', 'City'),
       endUseIndustry: get(r, 'endUseIndustry', 'End Use Industry'),
-      // [CHANGE 2] Read Master Segment from Monthly sheet if it exists
+      // [CHANGE #2] Read Master Segment from Monthly sheet if it exists
       masterSegment: get(r, 'Master_Segment', 'Master Segment'),
     }));
     if (cm.length) setCustomerMonthly(cm);
@@ -1433,11 +1433,21 @@ export default function App() {
 
           {/* Main content grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> {/* [NO CHANGE] Original 2-column grid */}
+            
             {/* Col 1 */}
             <div className="space-y-6">
               <SectionCard title="Customer Profile">
                 <CustomerInfo customer={selectedCustomer} />
               </SectionCard>
+
+              {/* [CHANGE #3] NEW CARD MOVED HERE (Col 1) */}
+              <SectionCard title="Master Segment">
+                <p className="text-xl font-semibold text-slate-800">
+                  {masterSegment}
+                </p>
+              </SectionCard>
+              {/* === END OF NEW CARD === */}
+
               <SectionCard
                 title="Segment Price Range"
                 right={`Node: ${segmentNode}`}
@@ -1458,15 +1468,7 @@ export default function App() {
 
             {/* Col 2 */}
             <div className="space-y-6">
-
-              {/* [CHANGE #3] NEW CARD ADDED HERE (Top of Col 2) */}
-              <SectionCard title="Master Segment">
-                <p className="text-xl font-semibold text-slate-800">
-                  {masterSegment}
-                </p>
-              </SectionCard>
-              {/* === END OF NEW CARD === */}
-
+              {/* [CHANGE #3] Card was REMOVED from here */}
               <SectionCard
                 title="Customer Behavior Profile"
                 right={
